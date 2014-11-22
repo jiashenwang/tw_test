@@ -60,6 +60,7 @@ public class MainActivity extends ActionBarActivity {
     private static Twitter twitter;
     private static RequestToken requestToken;
 	Button login, logout, display;
+	EditText userName;
 	TextView welcome;
 	NumberPicker np;
 	private ConnectionDetector cd;
@@ -92,6 +93,8 @@ public class MainActivity extends ActionBarActivity {
         logout = (Button) findViewById(R.id.logout);
         display = (Button) findViewById(R.id.view_posts);
         welcome = (TextView) findViewById(R.id.welcome);
+        userName = (EditText) findViewById(R.id.user_name_id);
+        userName.setText("SamuelChenUCSD");
         np = (NumberPicker) findViewById(R.id.number_picker);
         np.setMaxValue(100);
         np.setMinValue(1);
@@ -101,11 +104,17 @@ public class MainActivity extends ActionBarActivity {
 			@Override
 			public void onClick(View arg0) {
                 
-               	Intent intent = new Intent(getBaseContext(), resultActivity.class);
-            	intent.putExtra(USER_ID, accessToken.getUserId()+"");
-            	intent.putExtra(POSTS_AMOUNT, np.getValue()+"");
-            	intent.putExtra("TWITTER", (Serializable)twitter);
-            	startActivity(intent);
+				if(userName.getText().toString().trim().length()<=0){
+					Toast.makeText(getApplicationContext(), "Please enter User name! ", Toast.LENGTH_SHORT).show();
+				}else{
+	               	Intent intent = new Intent(getBaseContext(), resultActivity.class);
+	            	intent.putExtra(USER_ID, accessToken.getUserId()+"");
+	            	intent.putExtra(POSTS_AMOUNT, np.getValue()+"");
+	            	intent.putExtra("TWITTER", (Serializable)twitter);
+	            	intent.putExtra("USERID", userName.getText().toString());
+	            	startActivity(intent);	
+				}
+
             	
 			}
 		});
@@ -209,7 +218,7 @@ public class MainActivity extends ActionBarActivity {
                 logout.setVisibility(View.VISIBLE);
                 display.setVisibility(View.VISIBLE);
                 np.setVisibility(View.VISIBLE);
-
+                userName.setVisibility(View.VISIBLE);
                 // Getting user details from twitter
                 String username = user.getName();
 

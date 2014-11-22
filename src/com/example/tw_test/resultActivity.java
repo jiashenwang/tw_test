@@ -19,6 +19,8 @@ import org.json.JSONObject;
 import oauth.signpost.OAuthConsumer;
 
 import twitter4j.Paging;
+import twitter4j.Query;
+import twitter4j.QueryResult;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -46,7 +48,7 @@ public class resultActivity extends Activity {
     
 	
 	static ListView listview;
-	static String oauth_token, oauth_token_secret, user_id, amount, consumer_key, consumer_secret;
+	static String oauth_token, oauth_token_secret, user_id, amount, consumer_key, consumer_secret, UserID;
 	Twitter twitter;
 	
 	@Override
@@ -57,12 +59,12 @@ public class resultActivity extends Activity {
         Intent i=getIntent(); 
         user_id = i.getStringExtra(MainActivity.USER_ID); 
 		amount = i.getStringExtra(MainActivity.POSTS_AMOUNT);
+		UserID = i.getStringExtra("USERID");
 		twitter = (Twitter)getIntent().getSerializableExtra("TWITTER");
-
 		
 		listview = (ListView)findViewById(R.id.result_list);
 		
-		Entity entity = new Entity(twitter, Long.valueOf(user_id).longValue(), Integer.parseInt(amount));
+		Entity entity = new Entity(twitter, Long.valueOf(user_id).longValue(), Integer.parseInt(amount),UserID);
 		
 		GetPosts info = new GetPosts(resultActivity.this, listview);
 		info.execute(entity);
@@ -85,31 +87,39 @@ class GetPosts extends AsyncTask<Entity, Void, ArrayList<Post>>{
 	protected ArrayList<Post> doInBackground(Entity... params) {
 		// TODO Auto-generated method stub
 		List<twitter4j.Status> statuses = null;
-		ArrayList<Post> posts = new ArrayList();
+		ArrayList<Post> posts = new ArrayList<Post>();
 		Entity entity = params[0];
 		Paging paging = new Paging();
 		paging.count(entity.amount);
 		try {
-			statuses = entity.twitter.getUserTimeline(entity.id,paging);
+			Query q = new Query();
+			q.query(entity.user_name_id);
+			q.count(entity.amount);
+	
+			QueryResult query = entity.twitter.search(q);
+			statuses = query.getTweets();
+			
+			
 			for(int i=0; i<statuses.size(); i++){
 				String str = statuses.get(i).getText();
 				String str1 = pulltext(str);
 				String str2 = pullLinks(str);
+				
+				long temp_id = statuses.get(i).getId();
+				twitter4j.Status temp_status = entity.twitter.showStatus(temp_id);
 				
 				
 				if(str2 == null){
 					Post p = new Post(null, str, statuses.get(i).getCreatedAt()+"",statuses.get(i).getId());
 					posts.add(p);
 				}else{
-					ArrayList<Bitmap> pic = new ArrayList();
-					Log.wtf("~~~~~~~~~~~~", statuses.get(i).getExtendedMediaEntities().length+"");
+					ArrayList<Bitmap> pic = new ArrayList<Bitmap>();
 					
-					for(int j=0; j<statuses.get(i).getExtendedMediaEntities().length; j++){
-						URL status_image = new URL(statuses.get(i).getExtendedMediaEntities()[j].getMediaURL());
+					for(int j=0; j<temp_status.getExtendedMediaEntities().length; j++){
+						URL status_image = new URL(temp_status.getExtendedMediaEntities()[j].getMediaURL());
 						Bitmap bmp = BitmapFactory.decodeStream(status_image.openConnection().getInputStream());
 						pic.add(bmp);
 					}
-
 					Post p = new Post(pic, str1, statuses.get(i).getCreatedAt()+"",statuses.get(i).getId());
 					posts.add(p);
 				}
@@ -125,7 +135,7 @@ class GetPosts extends AsyncTask<Entity, Void, ArrayList<Post>>{
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} 
+		}
 		return posts;
 	}
 	
@@ -245,10 +255,12 @@ class Entity{
 	Twitter twitter;
 	long id;
 	int amount;
-	Entity(Twitter tw, long ID, int Amount){
+	String user_name_id;
+	Entity(Twitter tw, long ID, int Amount, String User_name_id){
 		twitter = tw;
 		id = ID;
 		amount =Amount;
+		user_name_id = User_name_id;
 	}
 	
 }
