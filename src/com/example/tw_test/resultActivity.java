@@ -105,14 +105,15 @@ class GetPosts extends AsyncTask<Entity, Void, ArrayList<Post>>{
 				String str1 = pulltext(str);
 				String str2 = pullLinks(str);
 				
-				long temp_id = statuses.get(i).getId();
-				twitter4j.Status temp_status = entity.twitter.showStatus(temp_id);
 				
 				
 				if(str2 == null){
-					Post p = new Post(null, str, statuses.get(i).getCreatedAt()+"",statuses.get(i).getId());
+					ArrayList<Bitmap> pic = new ArrayList<Bitmap>();
+					Post p = new Post(pic, str, statuses.get(i).getCreatedAt()+"",statuses.get(i).getId());
 					posts.add(p);
 				}else{
+					long temp_id = statuses.get(i).getId();
+					twitter4j.Status temp_status = entity.twitter.showStatus(temp_id);
 					ArrayList<Bitmap> pic = new ArrayList<Bitmap>();
 					
 					for(int j=0; j<temp_status.getExtendedMediaEntities().length; j++){
@@ -128,6 +129,10 @@ class GetPosts extends AsyncTask<Entity, Void, ArrayList<Post>>{
 			
 		} catch (TwitterException e) {
 			// TODO Auto-generated catch block
+			if(e.getStatusCode() == 404){
+				posts.clear();
+				return posts;
+			}
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -205,7 +210,7 @@ class GetPosts extends AsyncTask<Entity, Void, ArrayList<Post>>{
 		id.setText(posts.get(position).id+"");
 		date.setText(posts.get(position).message);
 		message.setText(posts.get(position).date);
-		if(posts.get(position).pic!=null){
+		if(posts.get(position).pic.size()>0){
 			if(posts.get(position).pic.size()==4){
 				status_pic1.setVisibility(ImageView.VISIBLE);
 				status_pic2.setVisibility(ImageView.VISIBLE);
@@ -228,8 +233,10 @@ class GetPosts extends AsyncTask<Entity, Void, ArrayList<Post>>{
 				status_pic1.setImageBitmap(posts.get(position).pic.get(0));
 				status_pic2.setImageBitmap(posts.get(position).pic.get(1));
 			}else{
-				status_pic1.setVisibility(ImageView.VISIBLE);
-				status_pic1.setImageBitmap(posts.get(position).pic.get(0));
+				if(posts.get(position).pic.get(0) != null){
+					status_pic1.setVisibility(ImageView.VISIBLE);
+					status_pic1.setImageBitmap(posts.get(position).pic.get(0));		
+				}
 			}
 			
 		}
